@@ -165,6 +165,10 @@ plt.show()
 
 <img src="https://user-images.githubusercontent.com/58063806/111794159-47f6ce00-8909-11eb-8de5-12efab863c9a.png" width=100% />
 
+- PowerTransformer : 데이터를 더욱 가우시안 분포와 비슷하게 변환
+  - Box-Cox : 입력 데이터로 오직 양수 값만 허용
+  - Yeo-Johnson : 입력 데이터로 양수와 음수 값이 모두 허용됨
+
 PowerTransformer의 두 알고리즘이 동일한 결과를 만들었지만 실제로는 어떻게 변환될 지 히스토그램으로 확인해보는 것이 좋음
 
 ```python
