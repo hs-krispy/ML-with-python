@@ -9,6 +9,8 @@
   - 입력 데이터에 대한 공분산 행렬을 구함
   - 공분산 행렬에 대한 고유 벡터를 찾고 이 중 첫 d개의 열을 기존 데이터에 행렬 곱셈을 해서 축소된 d차원의 행렬을 얻음   
 
+  > 공분산 행렬에 대한 고유 벡터는 분산이 어느 방향으로 가장 큰지 나타냄
+  >
   > A (공분산 행렬) v = λ(고유값) v
   >
   > Av − λv = (A − λI)v=0
@@ -74,6 +76,62 @@ plt.ylabel("주성분")
 
 - 첫 번째 주성분의 모든 특성은 부호가 같음
 - 모든 특성 사이에 공통의 상호관계가 있음
+
+#### 커널 PCA
+
+- 비선형 투영을 수행 가능
+- 투영된 후에 샘플의 군집을 유지하거나 꼬인 매니폴드에 가까운 데이터셋을 펼칠 때 유용
+
+```python
+from sklearn.datasets import make_swiss_roll
+X, t = make_swiss_roll(n_samples=1000, noise=0.2, random_state=42)
+
+axes = [-11.5, 14, -2, 23, -12, 15]
+
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=t, cmap=plt.cm.hot)
+ax.view_init(10, -70)
+ax.set_xlabel("$x_1$", fontsize=18)
+ax.set_ylabel("$x_2$", fontsize=18)
+ax.set_zlabel("$x_3$", fontsize=18)
+ax.set_xlim(axes[0:2])
+ax.set_ylim(axes[2:4])
+ax.set_zlim(axes[4:6])
+plt.show()
+```
+
+<img src="https://user-images.githubusercontent.com/58063806/127178266-d8b2c2a6-2167-4726-8455-4ddd8593d7d0.png" width=50% />
+
+```python
+from sklearn.decomposition import PCA, KernelPCA
+
+pca = PCA(n_components=2, random_state=42)
+rbf_pca = KernelPCA(n_components=2, random_state=42, kernel="rbf", gamma=0.04)
+lin_pca = KernelPCA(n_components=2, random_state=42, kernel="linear")
+sig_pca = KernelPCA(n_components=2, random_state=42, kernel="sigmoid", gamma=0.001, coef0=1)
+
+pca_X = pca.fit_transform(X)
+rbf_pca_X = rbf_pca.fit_transform(X)
+lin_pca_X = lin_pca.fit_transform(X)
+sig_pca_X = sig_pca.fit_transform(X)
+
+X_reduced = [pca_X, rbf_pca_X, lin_pca_X, sig_pca_X]
+titles = ["PCA", "rbf kernel PCA", "linear kernel PCA", "sigmoid kernel PCA"]
+
+plt.rcParams.update({'font.size': 20})
+fig, axes = plt.subplots(2, 2, figsize=(25, 20))
+for x, title, ax in zip(X_reduced, titles, axes.flatten()):
+    ax.scatter(x[:, 0], x[:, 1], c=t, alpha=0.7, cmap=plt.cm.hot)
+    ax.set_title(title)
+
+plt.show()
+```
+
+- 기존의 PCA와 linear kernel PCA는 동일한 결과를 보임
+
+<img src="https://user-images.githubusercontent.com/58063806/127178342-b0919f60-d2c4-424b-afb3-95c12820c3a6.png" width=90%/>
 
 #### 고유얼굴 특성 추출
 
