@@ -96,6 +96,75 @@ plt.ylabel("특성 1")
 
 원형이 아닌 클러스터를 잘 구분하지 못하는 모습을 보임
 
+#### 최적의 클러스터 개수 찾기
+
+**inertia - 각 샘플과 가장 가까운 센트로이드 사이의 평균 제곱 거리**
+
+<img src="https://user-images.githubusercontent.com/58063806/128634060-4b8a83c4-0fb6-45bd-ac07-c53b05500676.png" width=70%/>
+
+```python
+import matplotlib.pyplot as plt
+
+plt.rcParams.update({"font.size" : 15})
+inertia = []
+
+for k in range(1, 8):
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    label = kmeans.fit_predict(X)
+    inertia.append(kmeans.inertia_)
+plt.figure(figsize=(12, 7))
+plt.plot(range(1, 8), inertia, "o-")
+plt.annotate('Elbow',
+             xy=(4, inertia[3]),
+             xytext=(0.7, 0.5),
+             textcoords='figure fraction',
+             fontsize=16,
+             arrowprops=dict(facecolor='black', shrink=0.2)
+            )
+plt.xlabel("k")
+plt.ylabel("inertia")
+plt.show()
+```
+
+- inertia는 k가 증가함에 따라 점점 작아지므로 무조건적으로 높은 k를 선택하는 것이 좋은 것이 아님
+  - 클러스터가 늘어날수록 각 샘플은 가장 가까운 센트로이드에 더 가까워짐
+- inertia는 k가 4일때 까지 빠르게 감소함 **(elbow, k의 정답을 모른다면 해당 k가 좋은 선택지)** 
+
+<img src="https://user-images.githubusercontent.com/58063806/128634100-0306fcc1-95b1-456a-8407-bd2fa3fe1ab6.png" width=70% />
+
+**silhouette score - 모든 샘플에 대한 실루엣 계수의 평균**
+
+> (b - a) / max(a, b)
+>
+> a - 동일한 클러스터에 있는 다른 샘플까지 평균 거리
+>
+> b - 가장 가까운 클러스터의 샘플까지 평균 거리 (자신이 속한 클러스터를 제외하고 b가 최소인 클러스터)
+>
+> 실루엣 계수는  -1 ~ 1까지의 값을 가질 수 있음
+>
+> 1에 가까울수록 자신의 클러스터안에 잘 속해 있고 다른 클러스와는 멀리 떨어져 있다는 의미
+>
+> -1에 가까울수록 해당 샘플이 잘못된 클러스터에 할당되었다는 의미
+
+```python
+from sklearn.metrics import silhouette_score
+
+s_score = []
+
+for k in range(2, 8):
+    kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
+    s_score.append(silhouette_score(X, kmeans.labels_))
+plt.figure(figsize=(12, 7))
+plt.plot(range(2, 8), s_score, "o-")
+plt.xlabel("k")
+plt.ylabel("silhouette_score")
+plt.show()
+```
+
+- 실루엣 점수에서도 역시 k = 4일 때 가장 높은 점수를 보임 
+
+<img src="https://user-images.githubusercontent.com/58063806/128634731-c88cbff0-63fa-4bef-8fe2-fcfc6e0540af.png" width=70%/>
+
 - 각 데이터 포인트가 **클러스터의 중심 (즉, 하나의 성분)으로 표현**되는 관점으로 보는 것을 **벡터 양자화**라고 함
 
 ```python
@@ -196,3 +265,4 @@ print("클러스터 거리:\n", distance_features)
 - 대용량 데이터셋에서도 잘 작동
 - 무작위 초기화를 사용해서 알고리즘의 출력이 난수 초깃값에 따라 달라짐
 - 클러스터의 모양을 가정하고 있어서 활용범위가 비교적 제한적이며 클러스터의 개수를 지정해야만 함
+- 클러스터의 크기나 밀집도가 서로 다르거나 구형(원형)이 아닐 경우 잘 작동하지 않음
