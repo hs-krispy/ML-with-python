@@ -165,7 +165,62 @@ plt.show()
 
 <img src="https://user-images.githubusercontent.com/58063806/128634731-c88cbff0-63fa-4bef-8fe2-fcfc6e0540af.png" width=70%/>
 
-- 각 데이터 포인트가 **클러스터의 중심 (즉, 하나의 성분)으로 표현**되는 관점으로 보는 것을 **벡터 양자화**라고 함
+**silhouette diagram**
+
+```python
+import matplotlib.pyplot as plt
+from sklearn.metrics import silhouette_samples, silhouette_score
+from matplotlib.ticker import FixedLocator, FixedFormatter
+
+fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+
+for k, ax in zip([4, 5, 6, 7], axes.flatten()):
+    
+    kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
+    silhouette_coefficients = silhouette_samples(X, kmeans.labels_)
+    s_score = silhouette_score(X, kmeans.labels_)
+    
+    padding = len(X) // 30
+    pos = padding
+    
+    ticks = []
+    for i in range(k):
+        coeffs = silhouette_coefficients[kmeans.labels_ == i]
+        coeffs.sort()
+        
+        color = plt.cm.Spectral(i / k)
+        ax.fill_betweenx(np.arange(pos, pos + len(coeffs)), 0, coeffs, 
+                         facecolor=color, edgecolor="k", alpha=0.7)
+        ticks.append(pos + len(coeffs) // 2)
+        pos += len(coeffs) + padding
+	
+    # 눈금 위치 고정
+    ax.yaxis.set_major_locator(FixedLocator(ticks))
+    # 눈금 레이블에 대한 고정 문자열 반환
+    ax.yaxis.set_major_formatter(FixedFormatter(range(k)))
+    
+    if k in (4, 6):
+        ax.set_ylabel("Cluster")
+    
+    if k in (6, 7):
+        ax.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
+        ax.set_xlabel("Silhouette Coefficient")
+        
+    else:
+        ax.tick_params(labelbottom=False)
+
+    ax.axvline(x=s_score, color="red", linestyle="--")
+    ax.set_title("$k={}$".format(k), fontsize=16)
+
+plt.show()
+```
+
+<img src="https://user-images.githubusercontent.com/58063806/131136668-db03dd3b-ccb0-4833-8b50-bcccd8621035.png" width=90%/>
+
+- y축은 각 클러스터에 속한 샘플의 개수를 의미, x축은 각 클러스터에 속한 샘플들의 실루엣 점수
+- 적은 샘플이 빨간 점선 (파선)의 왼쪽에 있을 수록 좋음
+- 또한 모든 클러스터의 크기가 비슷한 것이 이상적
+- 복합적으로 고려했을 때 k=4일 때 전반적인 실루엣 점수가 가장 좋더라도 k=5를 선택하는 것이 좋음
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -217,6 +272,9 @@ axes[1, 0].set_ylabel("kmeans")
 axes[2, 0].set_ylabel("pca")
 axes[3, 0].set_ylabel("nmf")
 ```
+
+- 
+- 각 데이터 포인트가 **클러스터의 중심 (즉, 하나의 성분)으로 표현**되는 관점으로 보는 것을 **벡터 양자화**라고 함
 
 <img src="https://user-images.githubusercontent.com/58063806/111898269-53acd680-8a68-11eb-8918-c6fd891f3660.png" width=55% />
 
