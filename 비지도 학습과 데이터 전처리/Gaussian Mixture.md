@@ -270,3 +270,23 @@ plt.show()
 - k=3에서 BIC와 AIC가 모두 가장 작은 값을 나타내는 최선의 선택으로 나타남
 
 <img src="https://user-images.githubusercontent.com/58063806/131511547-161e19da-d337-48ee-a27d-95783db8faad.png" width=80% />
+
+
+
+#### 베이즈 가우시안 혼합 모델
+
+- 최적의 클러스터 개수를 수동으로 찾지 않고 불필요한 클러스터의 가중치를 0으로 (또는 0에 가깝게) 만듬
+- n_components를 최적의 클러스터 개수보다 크다고 믿을 만한 값으로 지정
+- 자동으로 불필요한 클러스터를 제거
+
+```python
+from sklearn.mixture import BayesianGaussianMixture
+
+bgm = BayesianGaussianMixture(n_components=10, n_init=10, random_state=42)
+bgm.fit(X)
+np.round(bgm.weights_, 3)
+# array([0.395, 0.205, 0.4  , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ])
+```
+
+- 자동으로 3개의 클러스터가 필요하다는 것을 감지
+- 클러스터 파라미터(가중치, 평균, 공분산 행렬 등)는 고정된 모델 파라미터가 아닌 클러스터 할당과 같이 잠재 확률 변수로 취급
