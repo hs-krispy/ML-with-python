@@ -183,3 +183,90 @@ plt.show()
   - full (default) - 각 클러스터는 모양, 크기, 방향에 제약이 없음 (각자 제약 없는 공분산 행렬을 가짐)
 
 <img src="https://user-images.githubusercontent.com/58063806/130251173-1671eec1-7538-41a4-8e33-1726255142da.png" width=90% />
+
+
+
+### 이상치 탐지
+
+- 보통과 많이 다른 샘플을 감지
+  - EX) 부정 거래 감지, 제조 결함이 있는 제품 감지, 모델 훈련전에 데이터 전처리
+- **밀도가 낮은 지역에 있는 모든 샘플을 이상치**로 판단 (밀도 임계값에 따라 달라짐)
+  - EX) 결함 제품 감지
+  - TN(거짓 양성, 완벽하게 정상인 제품이 결함으로 판단)이 너무 많으면 임계값을 낮춤
+  - FN(거짓 음성, 결함 제품이 정상으로 판단)이 너무 많으면 임계값을 높임
+- 유사한 작업으로 **특이치 탐지**가 있음
+  - 이상치로 오염되지 않은 "깨끗한" 데이터셋에서 훈련한다는 점이 차이점
+
+```python
+densities = gm.score_samples(X)
+density_threshold = np.percentile(densities, 4)
+anomalies = X[densities < density_threshold]
+
+plt.figure(figsize=(10, 6))
+
+plot_gaussian_mixture(gm, X)
+plt.scatter(anomalies[:, 0], anomalies[:, 1], color='r', marker='*')
+plt.ylim(top=5.1)
+
+plt.show()
+```
+
+- 4%를 밀도 임계값으로 사용하여 이상치를 판별
+
+<img src="https://user-images.githubusercontent.com/58063806/131507655-558ccf0a-c478-47cb-b29f-da52b9c725e7.png" width=60% />
+
+### 클러스터 개수 선택
+
+- k-means와 달리 가우시안 혼합 모델에서는 이너셔나 실루엣 스코어를 이용해 적절한 클러스터 개수를 선택하는 것이 불가
+
+  - 클러스터가 타원형이거나 크기가 다를 때 안정적이지 않기 때문
+
+- BIC (Bayesian information criterion)나 AIC (Akaike information criterion)와 같은 이론적 정보 기준을 최소화하는 클러스터 개수를 선정
+
+  > - m : 샘플의 개수
+  > - p : 모델이 학습할 파라미터 개수
+  > - L-hat : 모델의 가능도 함수의 최댓값
+  >
+  > BIC = log (m) p - 2log(L-hat)
+  >
+  > AIC = 2p - 2log(L-hat)
+
+- BIC와 AIC 모두 학습할 파라미터가 많은 (즉 클러스터가 많은) 모델에게 벌칙을 가하고 데이터에 잘 학습하는 모델에 보상을 더함
+
+- BIC와 AIC의 선택이 다를 경우 BIC가 선택한 모델이 AIC가 선택한 모델보다 간단한(파라미터가 적은) 경향이 있음
+
+  - 데이터에 아주 잘 맞지 않을 수 있음 (특히 대규모 데이터셋)
+
+```python
+BIC = []
+AIC = []
+
+for k in range(1, 10):
+    gm = GaussianMixture(n_components=k, n_init=10, random_state=42)
+    gm.fit(X)
+    
+    BIC.append(gm.bic(X))
+    AIC.append(gm.aic(X))
+    
+
+plt.rc("font", family="Malgun Gothic")
+plt.figure(figsize=(12, 6))
+
+plt.plot(range(1, 10), BIC, "bo-", label="BIC")
+plt.plot(range(1, 10), AIC, "go--", label="AIC")
+plt.xticks(fontsize=13)
+plt.yticks(fontsize=13)
+plt.xlabel("K", fontsize=15)
+plt.ylabel("정보 조건", fontsize=15)
+plt.legend(fontsize=15)
+
+plt.annotate("Minimum", xy=(3, BIC[2]), xytext=(3.5, 8600),
+             fontsize=20,
+             arrowprops=dict(facecolor='black', shrink=0.1, width=3))
+
+plt.show()
+```
+
+- k=3에서 BIC와 AIC가 모두 가장 작은 값을 나타내는 최선의 선택으로 나타남
+
+<img src="https://user-images.githubusercontent.com/58063806/131511547-161e19da-d337-48ee-a27d-95783db8faad.png" width=80% />
